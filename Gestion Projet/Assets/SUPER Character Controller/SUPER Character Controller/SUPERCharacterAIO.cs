@@ -150,7 +150,7 @@ public class SUPERCharacterAIO : MonoBehaviour{
     Vector2 MovInput_Smoothed;
     Vector2 _2DVelocity;
     float _2DVelocityMag, speedToVelocityRatio;
-    PhysicsMaterial _ZeroFriction, _MaxFriction;
+    PhysicMaterial _ZeroFriction, _MaxFriction;
     CapsuleCollider capsule;
     Rigidbody p_Rigidbody;
     bool crouchInput_Momentary, crouchInput_FrameOf, sprintInput_FrameOf,sprintInput_Momentary, slideInput_FrameOf, slideInput_Momentary;
@@ -398,16 +398,16 @@ public class SUPERCharacterAIO : MonoBehaviour{
         capsule = GetComponent<CapsuleCollider>();
         standingHeight = capsule.height;
         currentGroundSpeed = walkingSpeed;
-        _ZeroFriction = new PhysicsMaterial("Zero_Friction");
+        _ZeroFriction = new PhysicMaterial("Zero_Friction");
         _ZeroFriction.dynamicFriction =0f;
         _ZeroFriction.staticFriction =0;
-        _ZeroFriction.frictionCombine = PhysicsMaterialCombine.Minimum;
-        _ZeroFriction.bounceCombine = PhysicsMaterialCombine.Minimum;
-        _MaxFriction = new PhysicsMaterial("Max_Friction");
+        _ZeroFriction.frictionCombine = PhysicMaterialCombine.Minimum;
+        _ZeroFriction.bounceCombine = PhysicMaterialCombine.Minimum;
+        _MaxFriction = new PhysicMaterial("Max_Friction");
         _MaxFriction.dynamicFriction =1;
         _MaxFriction.staticFriction =1;
-        _MaxFriction.frictionCombine = PhysicsMaterialCombine.Maximum;
-        _MaxFriction.bounceCombine = PhysicsMaterialCombine.Average;
+        _MaxFriction.frictionCombine = PhysicMaterialCombine.Maximum;
+        _MaxFriction.bounceCombine = PhysicMaterialCombine.Average;
         #endregion
 
         #region Stamina System
@@ -824,7 +824,7 @@ public class SUPERCharacterAIO : MonoBehaviour{
             transform.rotation = (Quaternion.Euler(0,Mathf.MoveTowardsAngle(p_Rigidbody.rotation.eulerAngles.y,(Mathf.Atan2(InputDir.x,InputDir.z)*Mathf.Rad2Deg),10), 0));
             //transform.rotation = Quaternion.Euler(0,Mathf.MoveTowardsAngle(transform.eulerAngles.y,(Mathf.Atan2(InputDir.x,InputDir.z)*Mathf.Rad2Deg),2.5f), 0);
         }else if(isSliding){
-            transform.localRotation = (Quaternion.Euler(Vector3.up*Mathf.MoveTowardsAngle(p_Rigidbody.rotation.eulerAngles.y,(Mathf.Atan2(p_Rigidbody.linearVelocity.x,p_Rigidbody.linearVelocity.z)*Mathf.Rad2Deg),10)));
+            transform.localRotation = (Quaternion.Euler(Vector3.up*Mathf.MoveTowardsAngle(p_Rigidbody.rotation.eulerAngles.y,(Mathf.Atan2(p_Rigidbody.velocity.x,p_Rigidbody.velocity.z)*Mathf.Rad2Deg),10)));
         }else if(!currentGroundInfo.isGettingGroundInfo && rotateCharacterToCameraForward){
             transform.localRotation = (Quaternion.Euler(Vector3.up*Mathf.MoveTowardsAngle(p_Rigidbody.rotation.eulerAngles.y, headRot.y,10)));
         }
@@ -835,7 +835,7 @@ public class SUPERCharacterAIO : MonoBehaviour{
     void MovePlayer(Vector3 Direction, float Speed){
        // GroundInfo gI = GetGroundInfo();
         isIdle = Direction.normalized.magnitude <=0;
-        _2DVelocity = Vector2.right * p_Rigidbody.linearVelocity.x + Vector2.up * p_Rigidbody.linearVelocity.z;
+        _2DVelocity = Vector2.right * p_Rigidbody.velocity.x + Vector2.up * p_Rigidbody.velocity.z;
         speedToVelocityRatio = (Mathf.Lerp(0, 2, Mathf.InverseLerp(0, (sprintingSpeed/50), _2DVelocity.magnitude)));
         _2DVelocityMag = Mathf.Clamp((walkingSpeed/50) / _2DVelocity.magnitude, 0f,2f);
     
@@ -844,29 +844,29 @@ public class SUPERCharacterAIO : MonoBehaviour{
         if((currentGroundInfo.isGettingGroundInfo) && !Jumped && !isSliding && !doingPosInterp)
         {
             //Deceleration
-            if(Direction.magnitude==0&& p_Rigidbody.linearVelocity.normalized.magnitude>0.1f){
-                p_Rigidbody.AddForce(-new Vector3(p_Rigidbody.linearVelocity.x,currentGroundInfo.isInContactWithGround? p_Rigidbody.linearVelocity.y-  Physics.gravity.y:0,p_Rigidbody.linearVelocity.z)*(decelerationSpeed*Time.fixedDeltaTime),ForceMode.Force); 
+            if(Direction.magnitude==0&& p_Rigidbody.velocity.normalized.magnitude>0.1f){
+                p_Rigidbody.AddForce(-new Vector3(p_Rigidbody.velocity.x,currentGroundInfo.isInContactWithGround? p_Rigidbody.velocity.y-  Physics.gravity.y:0,p_Rigidbody.velocity.z)*(decelerationSpeed*Time.fixedDeltaTime),ForceMode.Force); 
             }
             //normal speed
             else if((currentGroundInfo.isGettingGroundInfo) && currentGroundInfo.groundAngle<hardSlopeLimit && currentGroundInfo.groundAngle_Raw<hardSlopeLimit){
-                p_Rigidbody.linearVelocity = (Vector3.MoveTowards(p_Rigidbody.linearVelocity,Vector3.ClampMagnitude(((Direction)*((Speed)*Time.fixedDeltaTime))+(Vector3.down),Speed/50),1));
+                p_Rigidbody.velocity = (Vector3.MoveTowards(p_Rigidbody.velocity,Vector3.ClampMagnitude(((Direction)*((Speed)*Time.fixedDeltaTime))+(Vector3.down),Speed/50),1));
             }
             capsule.sharedMaterial = InputDir.magnitude>0 ? _ZeroFriction : _MaxFriction;
         }
         //Sliding
         else if(isSliding){
-            p_Rigidbody.AddForce(-(p_Rigidbody.linearVelocity-Physics.gravity)*(slidingDeceleration*Time.fixedDeltaTime),ForceMode.Force);
+            p_Rigidbody.AddForce(-(p_Rigidbody.velocity-Physics.gravity)*(slidingDeceleration*Time.fixedDeltaTime),ForceMode.Force);
         }
         
         //Air Control
         else if(!currentGroundInfo.isGettingGroundInfo){
             p_Rigidbody.AddForce((((Direction*(walkingSpeed))*Time.fixedDeltaTime)*airControlFactor*5)*currentGroundInfo.groundAngleMultiplier_Inverse_persistent,ForceMode.Acceleration);
-            p_Rigidbody.linearVelocity= Vector3.ClampMagnitude((Vector3.right*p_Rigidbody.linearVelocity.x + Vector3.forward*p_Rigidbody.linearVelocity.z) ,(walkingSpeed/50))+(Vector3.up*p_Rigidbody.linearVelocity.y);
+            p_Rigidbody.velocity= Vector3.ClampMagnitude((Vector3.right*p_Rigidbody.velocity.x + Vector3.forward*p_Rigidbody.velocity.z) ,(walkingSpeed/50))+(Vector3.up*p_Rigidbody.velocity.y);
             if(!currentGroundInfo.potentialStair && jumpEnhancements){
-                if(p_Rigidbody.linearVelocity.y < 0 && p_Rigidbody.linearVelocity.y> Physics.gravity.y*1.5f){
-                    p_Rigidbody.linearVelocity += Vector3.up*(Physics.gravity.y*(decentMultiplier)*Time.fixedDeltaTime);
-                }else if(p_Rigidbody.linearVelocity.y>0 && !jumpInput_Momentary){
-                   p_Rigidbody.linearVelocity += Vector3.up*(Physics.gravity.y*(tapJumpMultiplier-1)*Time.fixedDeltaTime);
+                if(p_Rigidbody.velocity.y < 0 && p_Rigidbody.velocity.y> Physics.gravity.y*1.5f){
+                    p_Rigidbody.velocity += Vector3.up*(Physics.gravity.y*(decentMultiplier)*Time.fixedDeltaTime);
+                }else if(p_Rigidbody.velocity.y>0 && !jumpInput_Momentary){
+                   p_Rigidbody.velocity += Vector3.up*(Physics.gravity.y*(tapJumpMultiplier-1)*Time.fixedDeltaTime);
                 }
             }
         }
@@ -881,7 +881,7 @@ public class SUPERCharacterAIO : MonoBehaviour{
             (currentStance == Stances.Standing && !Jumped)){
 
                 Jumped = true;
-                p_Rigidbody.linearVelocity =(Vector3.right * p_Rigidbody.linearVelocity.x) + (Vector3.forward * p_Rigidbody.linearVelocity.z);
+                p_Rigidbody.velocity =(Vector3.right * p_Rigidbody.velocity.x) + (Vector3.forward * p_Rigidbody.velocity.z);
                 p_Rigidbody.AddForce(Vector3.up*(Force/10),ForceMode.Impulse);
                 if(enableStaminaSystem && jumpingDepletesStamina){
                     InstantStaminaReduction(s_JumpStaminaDepletion);
@@ -895,7 +895,7 @@ public class SUPERCharacterAIO : MonoBehaviour{
             (Time.time>(jumpBlankingPeriod+0.1f)) &&
             (currentStance == Stances.Standing)){
                 Jumped = true;
-                p_Rigidbody.linearVelocity =(Vector3.right * p_Rigidbody.linearVelocity.x) + (Vector3.forward * p_Rigidbody.linearVelocity.z);
+                p_Rigidbody.velocity =(Vector3.right * p_Rigidbody.velocity.x) + (Vector3.forward * p_Rigidbody.velocity.z);
                 p_Rigidbody.AddForce(Vector3.up*(Force/10),ForceMode.Impulse);
                 if(enableStaminaSystem && jumpingDepletesStamina){
                     InstantStaminaReduction(s_JumpStaminaDepletion);
@@ -919,8 +919,8 @@ public class SUPERCharacterAIO : MonoBehaviour{
         }else if(slideInput_Momentary){
             if(enableMovementDebugging) {print("Continuing Slide.");}
             if(Vector3.Distance(transform.position, cachedPosPreSlide)<maxFlatSlideDistance){p_Rigidbody.AddForce(cachedDirPreSlide*(sprintingSpeed/50),ForceMode.Force);}
-            if(p_Rigidbody.linearVelocity.magnitude>sprintingSpeed/50){p_Rigidbody.linearVelocity= p_Rigidbody.linearVelocity.normalized*(sprintingSpeed/50);}
-            else if(p_Rigidbody.linearVelocity.magnitude<(crouchingSpeed/25)){
+            if(p_Rigidbody.velocity.magnitude>sprintingSpeed/50){p_Rigidbody.velocity= p_Rigidbody.velocity.normalized*(sprintingSpeed/50);}
+            else if(p_Rigidbody.velocity.magnitude<(crouchingSpeed/25)){
                 if(enableMovementDebugging) {print("Slide too slow, ending slide into crouch.");}
                 //capsule.sharedMaterial = _MaxFrix;
                 isSliding = false;
@@ -930,7 +930,7 @@ public class SUPERCharacterAIO : MonoBehaviour{
             }
         }else{
             if(OverheadCheck()){
-                if(p_Rigidbody.linearVelocity.magnitude>(walkingSpeed/50)){
+                if(p_Rigidbody.velocity.magnitude>(walkingSpeed/50)){
                     if(enableMovementDebugging) {print("Key realeased, ending slide into a sprint.");}
                     isSliding = false;
                     StartCoroutine(ApplyStance(stanceTransitionSpeed,Stances.Standing));
@@ -1179,7 +1179,7 @@ public class SUPERCharacterAIO : MonoBehaviour{
             internalEyeHeight = (smoothSpeed > 0 ? Mathf.MoveTowards(internalEyeHeight, targetEyeHeight, stanceTransitionSpeed * Time.fixedDeltaTime) : targetCapsuleHeight);
             
             if(currentStance == Stances.Crouching && currentGroundInfo.isGettingGroundInfo){
-                p_Rigidbody.linearVelocity = p_Rigidbody.linearVelocity+(Vector3.down*2);
+                p_Rigidbody.velocity = p_Rigidbody.velocity+(Vector3.down*2);
                 if(enableMovementDebugging) {print("Applying Stance and applying down force ");}
             }
             yield return new WaitForFixedUpdate();
@@ -1287,21 +1287,21 @@ public class SUPERCharacterAIO : MonoBehaviour{
     void VaultCheck(){
         if(!isVaulting){
             if(enableVaultDebugging){ Debug.DrawRay(transform.position-(Vector3.up*(capsule.height/4)), transform.forward*(capsule.radius*2), Color.blue,120);}
-            if(Physics.Raycast(transform.position-(Vector3.up*(capsule.height/4)), transform.forward,out VC_Stage1,capsule.radius*2) && VC_Stage1.transform.CompareTag(vaultObjectTag)){
+            if(Physic.Raycast(transform.position-(Vector3.up*(capsule.height/4)), transform.forward,out VC_Stage1,capsule.radius*2) && VC_Stage1.transform.CompareTag(vaultObjectTag)){
                 float vaultObjAngle = Mathf.Acos(Vector3.Dot(Vector3.up,(Quaternion.LookRotation(VC_Stage1.normal,Vector3.up)*Vector3.up))) * Mathf.Rad2Deg;
 
                 if(enableVaultDebugging) {Debug.DrawRay((VC_Stage1.normal*-0.05f)+(VC_Stage1.point+((Quaternion.LookRotation(VC_Stage1.normal,Vector3.up)*Vector3.up)*(maxVaultHeight))), -(Quaternion.LookRotation(VC_Stage1.normal,Vector3.up)*Vector3.up)*(capsule.height),Color.cyan,120);}
-                if(Physics.Raycast((VC_Stage1.normal*-0.05f)+(VC_Stage1.point+((Quaternion.LookRotation(VC_Stage1.normal,Vector3.up)*Vector3.up)*(maxVaultHeight))), -(Quaternion.LookRotation(VC_Stage1.normal,Vector3.up)*Vector3.up), out VC_Stage2,capsule.height) && VC_Stage2.transform == VC_Stage1.transform && VC_Stage2.point.y <= currentGroundInfo.groundRawYPosition+maxVaultHeight+vaultObjAngle){
+                if(Physic.Raycast((VC_Stage1.normal*-0.05f)+(VC_Stage1.point+((Quaternion.LookRotation(VC_Stage1.normal,Vector3.up)*Vector3.up)*(maxVaultHeight))), -(Quaternion.LookRotation(VC_Stage1.normal,Vector3.up)*Vector3.up), out VC_Stage2,capsule.height) && VC_Stage2.transform == VC_Stage1.transform && VC_Stage2.point.y <= currentGroundInfo.groundRawYPosition+maxVaultHeight+vaultObjAngle){
                     vaultForwardVec = -VC_Stage1.normal;
 
                     if(enableVaultDebugging) {Debug.DrawLine(VC_Stage2.point+(vaultForwardVec*maxVaultDepth)-(Vector3.up*0.01f), (VC_Stage2.point- (Vector3.up*.01f)), Color.red,120   );}
-                    if(Physics.Linecast((VC_Stage2.point+(vaultForwardVec*maxVaultDepth))-(Vector3.up*0.01f), VC_Stage2.point - (Vector3.up*0.01f),out VC_Stage3)){
+                    if(Physic.Linecast((VC_Stage2.point+(vaultForwardVec*maxVaultDepth))-(Vector3.up*0.01f), VC_Stage2.point - (Vector3.up*0.01f),out VC_Stage3)){
                         Ray vc4 = new Ray(VC_Stage3.point+(vaultForwardVec*(capsule.radius+(vaultObjAngle*0.01f))),Vector3.down);
                         if(enableVaultDebugging){ Debug.DrawRay(vc4.origin, vc4.direction,Color.green,120);}
-                        Physics.SphereCast(vc4,capsule.radius,out VC_Stage4,maxVaultHeight+(capsule.height/2));
+                        Physic.SphereCast(vc4,capsule.radius,out VC_Stage4,maxVaultHeight+(capsule.height/2));
                         Vector3 proposedPos = ((Vector3.right*vc4.origin.x)+(Vector3.up*(VC_Stage4.point.y+(capsule.height/2)+0.01f))+(Vector3.forward*vc4.origin.z)) + (VC_Stage3.normal*0.02f);
 
-                        if(VC_Stage4.collider && !Physics.CheckCapsule(proposedPos-(Vector3.up*((capsule.height/2)-capsule.radius)), proposedPos+(Vector3.up*((capsule.height/2)-capsule.radius)),capsule.radius)){
+                        if(VC_Stage4.collider && !Physic.CheckCapsule(proposedPos-(Vector3.up*((capsule.height/2)-capsule.radius)), proposedPos+(Vector3.up*((capsule.height/2)-capsule.radius)),capsule.radius)){
                             isVaulting = true;
                             StopCoroutine("PositionInterp");
                             StartCoroutine(PositionInterp(proposedPos, vaultSpeed));
@@ -1413,7 +1413,7 @@ public class SUPERCharacterAIO : MonoBehaviour{
                     if(!zeroOut){
                         //Setup Thirdperson animation triggers here.
                         if(a_velocity != ""){
-                            _3rdPersonCharacterAnimator.SetFloat(a_velocity, p_Rigidbody.linearVelocity.sqrMagnitude);    
+                            _3rdPersonCharacterAnimator.SetFloat(a_velocity, p_Rigidbody.velocity.sqrMagnitude);    
                         }
                         if(a_2DVelocity != ""){
                             _3rdPersonCharacterAnimator.SetFloat(a_2DVelocity, _2DVelocity.magnitude); 
@@ -1550,7 +1550,7 @@ public class SUPERCharacterAIO : MonoBehaviour{
             }break;
         }
        
-        p_Rigidbody.linearVelocity = Vector3.zero;
+        p_Rigidbody.velocity = Vector3.zero;
         InputDir = Vector2.zero;
         MovInput = Vector2.zero;
         MovInput_Smoothed = Vector2.zero;
@@ -1591,7 +1591,7 @@ public class GroundInfo{
     public string groundTag;
     public Material groundMaterial;
     public TerrainLayer groundLayer;
-    public PhysicsMaterial groundPhysicMaterial;
+    public PhysicMaterial groundPhysicMaterial;
     internal Terrain currentTerrain;
     internal Mesh currentMesh;
     internal RaycastHit groundFromRay, stairCheck_RiserCheck, stairCheck_HeightCheck;
@@ -1603,7 +1603,7 @@ public class GroundInfo{
 public class GroundMaterialProfile{
     public MatProfileType profileTriggerType = MatProfileType.Material;
     public List<Material> _Materials;
-    public List<PhysicsMaterial> _physicMaterials;
+    public List<PhysicMaterial> _physicMaterials;
     public List<TerrainLayer> _Layers;
     public List<AudioClip> footstepClips = new List<AudioClip>();
 }
@@ -1810,7 +1810,7 @@ public class SuperFPEditor : Editor{
             GUI.enabled = true;
             t.stanceTransitionSpeed = EditorGUILayout.Slider(new GUIContent("Stance Transition Speed", "How quickly should the character change stances?"),t.stanceTransitionSpeed,0.1f, 10);
 
-            EditorGUILayout.PropertyField(groundLayerMask, new GUIContent("What Is Ground", "What physics layers should be considered to be ground?"));
+            EditorGUILayout.PropertyField(groundLayerMask, new GUIContent("What Is Ground", "What Physic layers should be considered to be ground?"));
 
             #region Slope affectors
             EditorGUILayout.Space();
