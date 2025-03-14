@@ -8,6 +8,8 @@ TagManager:
   - Food
   - SpeedBoost
   - Destructible
+  - Teleporter
+  - Teleporter2
   layers:
   - Default
   - TransparentFX
